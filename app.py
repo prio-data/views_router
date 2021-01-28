@@ -1,10 +1,15 @@
-import io
+"""
+Very simple router that simply proxies to various data sources and transformers.
+Built to make this "conversation" flow smoothly.
+
+Also caches each request, which works well with
+"""
+
 import os
 import requests
 import fastapi
-import pandas as pd
 from environs import Env
-
+import caching
 env = Env()
 env.read_env()
 
@@ -18,18 +23,18 @@ URLS = {
 }
 
 app = fastapi.FastAPI()
-
+cache = caching.ByteFileCache(env("CACHE"))
 
 @app.get("/{loa}/{dest}/{path:path}")
 def route(loa:str,dest:str,path:str):
-    cachepath = os.path.join(env("CACHE"),loa,os.path.join(dest,path))
-    if cachepath[-1] == "/":
-        cachepath = cachepath[:-1]
+    """
+    Proxies the request to a given _destination_ (host),
+    requesting the _path_ with the _loa_ prepended.
+    """
 
     try:
-        with open(cachepath,"rb") as f:
-            content = f.read()
-    except FileNotFoundError:
+        content = cache.get(loa,dest,path)
+    except caching.NotCached:
         try:
             url = URLS[dest]
         except KeyError:
@@ -41,20 +46,7 @@ def route(loa:str,dest:str,path:str):
         if not proxy.status_code == 200:
             return fastapi.Response(content=proxy.content,
                     status_code=proxy.status_code)
-
         content = proxy.content
-        cachefolder,_ = os.path.split(cachepath)
-
-        try:
-            os.makedirs(cachefolder)
-        except FileExistsError:
-            pass
-        with open(cachepath,"wb") as f:
-            f.write(content)
-
-    fake_file = io.BytesIO(content)
-    data = pd.read_parquet(fake_file)
-    fake_file.seek(0)
-    fake_file.truncate()
+        cache.store(content,loa,dest,path)
 
     return fastapi.Response(content=content)
