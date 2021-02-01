@@ -44,7 +44,7 @@ def route(loa:str,dest:str,path:str):
         proxy = requests.get(os.path.join(url,loa,path))
 
         if not proxy.status_code == 200:
-            return fastapi.Response(content=proxy.content,
+            return fastapi.Response(content=f"Proxied {proxy.content}",
                     status_code=proxy.status_code)
         content = proxy.content
         cache.store(content,loa,dest,path)
