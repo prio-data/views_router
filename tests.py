@@ -47,3 +47,4 @@ class TestRouter(TestCase):
             self.assertEqual(response.body,test_content)
             self.assertEqual(len(dc.storage),1)
 
+    
