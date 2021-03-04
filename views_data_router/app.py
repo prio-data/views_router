@@ -8,22 +8,16 @@ Also caches each request, which works well with
 import os
 import requests
 import fastapi
-from environs import Env
 import caching
-env = Env()
-env.read_env()
-
-BASE_URL = "http://0.0.0.0:8001"
-TRF_URL = "http://0.0.0.0:8002"
-CACHE="./cache"
+import settings
 
 URLS = {
-    "trf": env("TRF_URL"),
-    "base": env("BASE_URL")
+    "trf": settings.TRANSFORMER_URL,
+    "base": settings.BASE_DATA_RETRIEVER_URL 
 }
 
 app = fastapi.FastAPI()
-cache = caching.ByteFileCache(env("CACHE"))
+cache = caching.ByteFileCache(settings.CACHE_FOLDER)
 
 @app.get("/{loa}/{dest}/{path:path}")
 def route(loa:str,dest:str,path:str):
