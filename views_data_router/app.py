@@ -17,7 +17,7 @@ URLS = {
 }
 
 app = fastapi.FastAPI()
-cache = caching.ByteFileCache(settings.CACHE_FOLDER)
+cache = caching.BlobStorageCache()
 
 @app.get("/{loa}/{dest}/{path:path}")
 def route(loa:str,dest:str,path:str):

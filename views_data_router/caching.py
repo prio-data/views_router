@@ -4,6 +4,9 @@ Cache implementations
 from typing import List
 import os
 from abc import ABC,abstractmethod
+from azure.storage.blob import BlobServiceClient
+from azure.core.exceptions import ResourceNotFoundError
+import settings
 
 class NotCached(Exception):
     pass
@@ -17,7 +20,7 @@ class Cache(ABC):
         pass
 
 class ByteFileCache(Cache):
-    def __init__(self,base_path):
+    def __init__(self,base_path="cache"):
         self.base_path = base_path
 
     def store(self,content,*identifiers):
@@ -50,6 +53,31 @@ class ByteFileCache(Cache):
     def __str__(self):
         return f"FileCache @ {self.base_path}"
 
+class BlobStorageCache(Cache):
+    def __init__(self,*_,**__):
+        self.client = BlobServiceClient.from_connection_string(
+                    settings.BLOB_STORAGE_CON_STR,
+                )
+        self.container_client = self.client.get_container_client(
+                    settings.BLOB_CONTAINER_NAME,
+                )
+    def store(self,content,*identifiers):
+        path = os.path.join(*identifiers)
+        blob_client = self.container_client.get_blob_client(path)
+        blob_client.upload_blob(content)
+
+    def get(self,*identifiers):
+        path = os.path.join(*identifiers)
+        try:
+            blob = (self.container_client
+                    .get_blob_client(path)
+                    .download_blob()
+                )
+        except ResourceNotFoundError as rnf:
+            raise NotCached from rnf
+
+        return blob.content_as_bytes()
+
 class DictCache(Cache):
     """
     Just caches in a dict
@@ -73,4 +101,3 @@ class DictCache(Cache):
 
     def __str__(self):
         return f"Dictcache {self.storage}"
-
