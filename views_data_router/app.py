@@ -8,8 +8,10 @@ Also caches each request, which works well with
 import os
 import requests
 import fastapi
+
 import caching
 import settings
+from paths import nav_summary 
 
 URLS = {
     "trf": settings.TRANSFORMER_URL,
@@ -18,6 +20,22 @@ URLS = {
 
 app = fastapi.FastAPI()
 cache = caching.BlobStorageCache()
+
+@app.get("/nav/{path:path}")
+def nav_path(path:str):
+    """
+    Returns a JSON response with: 
+        The path shifted in TIME :param n: places.
+        The bounds of the path (start-end)
+    """
+    
+    try:
+        navObject = nav_summary(path) 
+    except ValueError as ve:
+        return fastapi.Response(str(ve),status_code=400)
+        #return fastapi.Response(f"Year not found in path \"{path}\"",status_code=400)
+    else:
+        return navObject
 
 @app.get("/{loa}/{dest}/{path:path}")
 def route(loa:str,dest:str,path:str):

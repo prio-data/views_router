@@ -22,3 +22,9 @@ get_remote_config = lambda k: app_config_client.get_configuration_setting(k).val
 TRANSFORMER_URL = get_remote_config("data-transformer-url")
 BASE_DATA_RETRIEVER_URL = get_remote_config("base-data-retriever-url")
 BLOB_CONTAINER_NAME = get_remote_config("router-cache-container-name")
+
+
+# TODO these should be queried from somewhere, maybe a service responsible
+# for keeping track of various DB metadata things?
+DB_MIN_YEAR = 1989
+DB_MAX_YEAR = 2020
