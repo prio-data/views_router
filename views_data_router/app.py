@@ -19,7 +19,10 @@ URLS = {
 }
 
 app = fastapi.FastAPI()
-cache = caching.BlobStorageCache()
+if settings.PROD:
+    cache = caching.BlobStorageCache()
+else:
+    cache = caching.ByteFileCache(base_path="cache")
 
 @app.get("/nav/{path:path}")
 def nav_path(path:str):
@@ -55,10 +58,11 @@ def route(loa:str,dest:str,path:str):
 
         proxy = requests.get(os.path.join(url,loa,path))
 
-        if not proxy.status_code == 200:
+        if proxy.status_code == 200:
+            content = proxy.content
+            cache.store(content,loa,dest,path)
+        else: 
             return fastapi.Response(content=f"Proxied {proxy.content}",
                     status_code=proxy.status_code)
-        content = proxy.content
-        cache.store(content,loa,dest,path)
 
     return fastapi.Response(content=content)

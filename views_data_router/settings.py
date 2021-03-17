@@ -1,5 +1,7 @@
 
+import os
 from environs import Env
+import requests
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.appconfiguration import AzureAppConfigurationClient
@@ -7,22 +9,27 @@ from azure.appconfiguration import AzureAppConfigurationClient
 env = Env()
 env.read_env()
 
-CACHE_FOLDER = env.str("CACHE_FOLDER","cache")
+PROD = env.bool("PRODUCTION","true")
 
-secret_client = SecretClient(env.str("KEY_VAULT_URL"),credential=DefaultAzureCredential())
+def get_dev_kv(k):
+    return requests.get(os.path.join(env.str("REST_ENV_URL",""),k)).content.decode()
 
-BLOB_STORAGE_CON_STR = secret_client.get_secret("blob-storage-connection-string").value
+if PROD:
+    secret_client = SecretClient(env.str("KEY_VAULT_URL"),credential=DefaultAzureCredential())
+    app_config_client = AzureAppConfigurationClient.from_connection_string(
+            get_secret("app-settings-connection-string")
+            )
+    get_secret = lambda k: secret_client.get_secret(k).value
+    get_config = lambda k: app_config_client.get_configuration_setting(k).value
+else:
+    get_secret = get_dev_kv 
+    get_config = get_dev_kv
 
-app_config_client = AzureAppConfigurationClient.from_connection_string(
-        secret_client.get_secret("app-settings-connection-string").value
-        )
+BLOB_STORAGE_CON_STR = get_secret("blob-storage-connection-string")
 
-get_remote_config = lambda k: app_config_client.get_configuration_setting(k).value
-
-TRANSFORMER_URL = get_remote_config("data-transformer-url")
-BASE_DATA_RETRIEVER_URL = get_remote_config("base-data-retriever-url")
-BLOB_CONTAINER_NAME = get_remote_config("router-cache-container-name")
-
+TRANSFORMER_URL = get_config("data-transformer-url")
+BASE_DATA_RETRIEVER_URL = get_config("base-data-retriever-url")
+BLOB_CONTAINER_NAME = get_config("router-cache-container-name")
 
 # TODO these should be queried from somewhere, maybe a service responsible
 # for keeping track of various DB metadata things?
