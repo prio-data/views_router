@@ -7,7 +7,6 @@ from abc import ABC,abstractmethod
 from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import ResourceNotFoundError
 import settings
-import logging
 
 class NotCached(Exception):
     pass
@@ -43,18 +42,14 @@ class ByteFileCache(Cache):
 
     def _resolve(self,*identifiers)->str:
         path_elements = identifiers
-        logging.critical(str(path_elements))
         path = os.path.join(self.base_path,*path_elements)
-        logging.critical(str(path))
         folder,_ = os.path.split(path)
-        logging.critical(str(folder))
         try:
             os.makedirs(folder)
         except FileExistsError:
             pass
         if path[-1] == "/":
             path = path[:-1]
-        logging.critical(str(path))
         return path 
 
     def __str__(self):

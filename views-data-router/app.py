@@ -5,6 +5,8 @@ Also caches each request, which works well with
 """
 
 import os
+import logging
+
 import requests
 import fastapi
 
@@ -12,6 +14,13 @@ import caching
 from caching import cache
 import settings
 from paths import nav_summary 
+
+try:
+    logging.basicConfig(level=getattr(logging,settings.LOG_LEVEL))
+except AttributeError:
+    pass
+
+logger = logging.getLogger(__name__)
 
 URLS = {
     "trf": settings.TRANSFORMER_URL,
@@ -32,7 +41,6 @@ def nav_path(path:str):
         navObject = nav_summary(path) 
     except ValueError as ve:
         return fastapi.Response(str(ve),status_code=400)
-        #return fastapi.Response(f"Year not found in path \"{path}\"",status_code=400)
     else:
         return navObject
 
@@ -46,6 +54,7 @@ def route(loa:str,dest:str,path:str):
     try:
         content = cache.get(loa,dest,path)
     except caching.NotCached:
+        logging.info("Retrieving content for %s - %s - %s",loa,dest,path)
         try:
             url = URLS[dest]
         except KeyError:
@@ -56,9 +65,12 @@ def route(loa:str,dest:str,path:str):
 
         if proxy.status_code == 200:
             content = proxy.content
+            logging.info("Stashing %s - %s - %s",loa,dest,path)
             cache.store(content,loa,dest,path)
         else: 
             return fastapi.Response(content=f"Proxied {proxy.content}",
                     status_code=proxy.status_code)
+    else:
+        logging.info("Used cached data for %s - %s - %s",loa,dest,path)
 
     return fastapi.Response(content=content)

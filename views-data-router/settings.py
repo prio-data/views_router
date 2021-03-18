@@ -36,3 +36,5 @@ BLOB_CONTAINER_NAME = get_config("router-cache-container-name")
 DB_MIN_YEAR = 1989
 DB_MAX_YEAR = 2020
 
+LOG_LEVEL = get_config("log-level")
+
