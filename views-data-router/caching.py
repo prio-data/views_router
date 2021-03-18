@@ -22,10 +22,6 @@ class Cache(ABC):
 class ByteFileCache(Cache):
     def __init__(self,base_path):
         self.base_path = base_path
-        try:
-            os.makedirs(self.base_path)
-        except FileExistsError:
-            pass
 
     def store(self,content,*identifiers):
         path = self._resolve(*identifiers) 

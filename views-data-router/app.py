@@ -1,4 +1,5 @@
-""" Very simple router that simply proxies to various data sources and transformers.
+""" 
+Router that simply proxies to various data sources and transformers.
 Built to make this "conversation" flow smoothly.
 
 Also caches each request, which works well with
@@ -13,7 +14,6 @@ import fastapi
 import caching
 from caching import cache
 import settings
-from paths import nav_summary 
 
 try:
     logging.basicConfig(level=getattr(logging,settings.LOG_LEVEL))

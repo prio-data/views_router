@@ -5,6 +5,9 @@ import requests
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.appconfiguration import AzureAppConfigurationClient
+import logging
+
+logger = logging.getLogger(__name__)
 
 env = Env()
 env.read_env()
@@ -12,7 +15,11 @@ env.read_env()
 PROD = env.bool("PRODUCTION","true")
 
 def get_dev_kv(k):
-    return requests.get(os.path.join(env.str("REST_ENV_URL",""),k)).content.decode()
+    try:
+        return requests.get(os.path.join(env.str("REST_ENV_URL",""),k)).content.decode()
+    except Exception as e:
+        logger.warning("Tried to get setting %s, got error %s",k,str(e))
+        return ""
 
 if PROD:
     secret_client = SecretClient(env.str("KEY_VAULT_URL"),credential=DefaultAzureCredential())
