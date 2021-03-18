@@ -1,5 +1,4 @@
-"""
-Very simple router that simply proxies to various data sources and transformers.
+""" Very simple router that simply proxies to various data sources and transformers.
 Built to make this "conversation" flow smoothly.
 
 Also caches each request, which works well with
@@ -10,6 +9,7 @@ import requests
 import fastapi
 
 import caching
+from caching import cache
 import settings
 from paths import nav_summary 
 
@@ -19,10 +19,6 @@ URLS = {
 }
 
 app = fastapi.FastAPI()
-if settings.PROD:
-    cache = caching.BlobStorageCache()
-else:
-    cache = caching.ByteFileCache(base_path="cache")
 
 @app.get("/nav/{path:path}")
 def nav_path(path:str):

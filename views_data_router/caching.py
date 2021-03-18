@@ -7,6 +7,7 @@ from abc import ABC,abstractmethod
 from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import ResourceNotFoundError
 import settings
+import logging
 
 class NotCached(Exception):
     pass
@@ -20,18 +21,15 @@ class Cache(ABC):
         pass
 
 class ByteFileCache(Cache):
-    def __init__(self,base_path="cache"):
+    def __init__(self,base_path):
         self.base_path = base_path
-
-    def store(self,content,*identifiers):
-        path = self._resolve(*identifiers) 
-        folder,_ = os.path.split(path)
-
         try:
-            os.makedirs(folder)
+            os.makedirs(self.base_path)
         except FileExistsError:
             pass
 
+    def store(self,content,*identifiers):
+        path = self._resolve(*identifiers) 
         with open(path,"wb") as f:
             f.write(content)
 
@@ -44,10 +42,19 @@ class ByteFileCache(Cache):
             raise NotCached from fnf 
 
     def _resolve(self,*identifiers)->str:
-        path_elements = (self.base_path,) + identifiers
-        path = os.path.join(*path_elements)
+        path_elements = identifiers
+        logging.critical(str(path_elements))
+        path = os.path.join(self.base_path,*path_elements)
+        logging.critical(str(path))
+        folder,_ = os.path.split(path)
+        logging.critical(str(folder))
+        try:
+            os.makedirs(folder)
+        except FileExistsError:
+            pass
         if path[-1] == "/":
             path = path[:-1]
+        logging.critical(str(path))
         return path 
 
     def __str__(self):
@@ -101,3 +108,8 @@ class DictCache(Cache):
 
     def __str__(self):
         return f"Dictcache {self.storage}"
+
+if settings.PROD:
+    cache = BlobStorageCache()
+else:
+    cache = ByteFileCache(base_path=settings.env.str("CACHE_PATH","cache/rtr"))
