@@ -6,7 +6,7 @@ import os
 from abc import ABC,abstractmethod
 from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import ResourceNotFoundError
-import settings
+from settings import config
 
 class NotCached(Exception):
     pass
@@ -54,10 +54,10 @@ class ByteFileCache(Cache):
 class BlobStorageCache(Cache):
     def __init__(self,*_,**__):
         self.client = BlobServiceClient.from_connection_string(
-                    settings.BLOB_STORAGE_CON_STR,
+                    config("BLOB_STORAGE_CONNECTION_STRING"),
                 )
         self.container_client = self.client.get_container_client(
-                    settings.BLOB_CONTAINER_NAME,
+                    config("BLOB_STORAGE_ROUTER_CACHE"),
                 )
     def store(self,content,*identifiers):
         path = os.path.join(*identifiers)
@@ -100,7 +100,4 @@ class DictCache(Cache):
     def __str__(self):
         return f"Dictcache {self.storage}"
 
-if settings.PROD:
-    cache = BlobStorageCache()
-else:
-    cache = ByteFileCache(base_path=settings.env.str("CACHE_PATH","cache/rtr"))
+cache = BlobStorageCache()

@@ -13,18 +13,18 @@ import fastapi
 
 import caching
 from caching import cache
-import settings
+from settings import config
 
 try:
-    logging.basicConfig(level=getattr(logging,settings.LOG_LEVEL))
+    logging.basicConfig(level=getattr(logging,config("LOG_LEVEL")))
 except AttributeError:
     pass
 
 logger = logging.getLogger(__name__)
 
 URLS = {
-    "trf": settings.TRANSFORMER_URL,
-    "base": settings.BASE_DATA_RETRIEVER_URL 
+    "trf": config("TRANSFORMER_URL"),
+    "base": config("BASE_DATA_RETRIEVER_URL") 
 }
 
 app = fastapi.FastAPI()
