@@ -15,6 +15,9 @@ import caching
 from caching import cache
 from settings import config
 
+logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
+logger.setLevel(logging.WARNING)
+
 try:
     logging.basicConfig(level=getattr(logging,config("LOG_LEVEL")))
 except AttributeError:
