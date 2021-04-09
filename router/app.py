@@ -53,27 +53,28 @@ def route(loa:str,dest:str,path:str):
     Proxies the request to a given _destination_ (host),
     requesting the _path_ with the _loa_ prepended.
     """
+    try:
+        base_url = URLS[dest]
+    except KeyError:
+        return fastapi.Response(f"Dest {dest} not registered",
+                status_code=404)
+    url = os.path.join(base_url,loa,path)
 
     try:
         content = cache.get(loa,dest,path)
     except caching.NotCached:
-        logging.info("Retrieving content for %s - %s - %s",loa,dest,path)
-        try:
-            url = URLS[dest]
-        except KeyError:
-            return fastapi.Response(f"Dest {dest} not registered",
-                    status_code=404)
+        logger.info("Fetching %s",url)
 
-        proxy = requests.get(os.path.join(url,loa,path))
+        proxy = requests.get(url)
 
         if proxy.status_code == 200:
+            logger.info("Stashing %s",url)
             content = proxy.content
-            logging.info("Stashing %s - %s - %s",loa,dest,path)
             cache.store(content,loa,dest,path)
         else: 
             return fastapi.Response(content=f"Proxied {proxy.content}",
                     status_code=proxy.status_code)
     else:
-        logging.info("Used cached data for %s - %s - %s",loa,dest,path)
+        logger.info("Used cache for %s",url)
 
     return fastapi.Response(content=content)
