@@ -1,5 +1,4 @@
 
-import os
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -7,9 +6,7 @@ from testfixtures import Replace
 
 from requests import Response
 
-import caching
-
-from app import route
+from . import app,caching
 
 
 
@@ -37,13 +34,13 @@ class TestRouter(TestCase):
             rsp.status_code = 200
             mock_requests.get.return_value = rsp
 
-            response = route(*test_identifiers)
+            response = app.route(*test_identifiers)
 
             storage_path = dc._resolve(*test_identifiers)
             self.assertEqual(dc.storage[storage_path],test_content)
             self.assertEqual(response.body,test_content)
 
-            response = route(*test_identifiers)
+            response = app.route(*test_identifiers)
             self.assertEqual(response.body,test_content)
             self.assertEqual(len(dc.storage),1)
 

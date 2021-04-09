@@ -11,41 +11,28 @@ import logging
 import requests
 import fastapi
 
-import caching
-from caching import cache
-from settings import config
+from . import caching,settings
 
 logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
 logger.setLevel(logging.WARNING)
 
 try:
-    logging.basicConfig(level=getattr(logging,config("LOG_LEVEL")))
+    logging.basicConfig(level=getattr(logging,settings.config("LOG_LEVEL")))
 except AttributeError:
     pass
 
 logger = logging.getLogger(__name__)
 
 URLS = {
-    "trf": config("TRANSFORMER_URL"),
-    "base": config("BASE_DATA_RETRIEVER_URL") 
+    "trf": settings.config("TRANSFORMER_URL"),
+    "base": settings.config("BASE_DATA_RETRIEVER_URL") 
 }
 
 app = fastapi.FastAPI()
-
-@app.get("/nav/{path:path}")
-def nav_path(path:str):
-    """
-    Returns a JSON response with: 
-        The path shifted in TIME :param n: places.
-        The bounds of the path (start-end)
-    """
-    
-    try:
-        navObject = nav_summary(path) 
-    except ValueError as ve:
-        return fastapi.Response(str(ve),status_code=400)
-    else:
-        return navObject
+cache = caching.BlobStorageCache(
+        settings.config("BLOB_STORAGE_CONNECTION_STRING"),
+        settings.config("BLOB_STORAGE_ROUTER_CACHE")
+    )
 
 @app.get("/{loa}/{dest}/{path:path}")
 def route(loa:str,dest:str,path:str):
