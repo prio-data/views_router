@@ -9,9 +9,9 @@ import os
 import logging
 
 import requests
-import fastapi
+from fastapi import FastAPI,Response
 
-from . import caching,settings
+from . import caching,settings,paths
 
 logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
 logger.setLevel(logging.WARNING)
@@ -23,45 +23,46 @@ except AttributeError:
 
 logger = logging.getLogger(__name__)
 
-URLS = {
-    "trf": settings.config("TRANSFORMER_URL"),
-    "base": settings.config("BASE_DATA_RETRIEVER_URL") 
-}
+app = FastAPI()
 
-app = fastapi.FastAPI()
 cache = caching.BlobStorageCache(
         settings.config("BLOB_STORAGE_CONNECTION_STRING"),
         settings.config("BLOB_STORAGE_ROUTER_CACHE")
     )
 
-@app.get("/{loa}/{dest}/{path:path}")
-def route(loa:str,dest:str,path:str):
+remotes = paths.Remotes(
+            trf=settings.config("TRANSFORMER_URL"),
+            base=settings.config("BASE_DATA_RETRIEVER_URL")
+        )
+
+@app.get("/{raw_path:path}")
+def route(raw_path:str):
     """
-    Proxies the request to a given _destination_ (host),
-    requesting the _path_ with the _loa_ prepended.
+    Requests the provided path from a remote, either from cache or over HTTP.
     """
     try:
-        base_url = URLS[dest]
-    except KeyError:
-        return fastapi.Response(f"Dest {dest} not registered",
-                status_code=404)
-    url = os.path.join(base_url,loa,path)
+        path = paths.Path.parse(raw_path)
+    except ValueError as ve:
+        return Response(f"Path {raw_path} could not resolve: {str(ve)}", status_code=404)
+
+    url = path.url(remotes)
+    cache_name = path.path
 
     try:
-        content = cache.get(loa,dest,path)
+        content = cache.get(cache_name)
+
     except caching.NotCached:
-        logger.info("Fetching %s",url)
+        response = requests.get(url)
 
-        proxy = requests.get(url)
-
-        if proxy.status_code == 200:
+        if response.status_code == 200:
             logger.info("Stashing %s",url)
-            content = proxy.content
-            cache.store(content,loa,dest,path)
-        else: 
-            return fastapi.Response(content=f"Proxied {proxy.content}",
-                    status_code=proxy.status_code)
-    else:
-        logger.info("Used cache for %s",url)
+            content = response.content
+            cache.store(content,cache_name)
 
-    return fastapi.Response(content=content)
+        else: 
+            return Response(
+                    content=f"HTTP error from {url}: {response.content}",
+                    status_code = response.status_code
+                    )
+
+    return Response(content=content)

@@ -18,16 +18,14 @@ class BlobStorageCache:
         self.container_client = self.client.get_container_client(
                     container,
                 )
-    def store(self,content,*identifiers):
-        path = os.path.join(*identifiers)
-        blob_client = self.container_client.get_blob_client(path)
+    def store(self,content,key):
+        blob_client = self.container_client.get_blob_client(key)
         blob_client.upload_blob(content)
 
-    def get(self,*identifiers):
-        path = os.path.join(*identifiers)
+    def get(self,key):
         try:
             blob = (self.container_client
-                    .get_blob_client(path)
+                    .get_blob_client(key)
                     .download_blob()
                 )
         except ResourceNotFoundError as rnf:
