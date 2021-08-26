@@ -31,8 +31,8 @@ cache = caching.BlobStorageCache(
     )
 
 remotes = paths.Remotes(
-            trf=settings.config("TRANSFORMER_URL"),
-            base=settings.config("BASE_DATA_RETRIEVER_URL")
+            trf=os.path.join(settings.config("TRANSFORMER_URL"),"apply"),
+            base=os.path.join(settings.config("BASE_DATA_RETRIEVER_URL"),"fetch")
         )
 
 @app.get("/{raw_path:path}")
