@@ -25,10 +25,9 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-cache = caching.BlobStorageCache(
-        settings.config("BLOB_STORAGE_CONNECTION_STRING"),
-        settings.config("BLOB_STORAGE_ROUTER_CACHE")
-    )
+cache = caching.RESTCache(
+            settings.config("DATA_CACHE_URL") + "/files"
+        )
 
 remotes = paths.Remotes(
             trf=os.path.join(settings.config("TRANSFORMER_URL"),"apply"),
