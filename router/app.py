@@ -13,9 +13,6 @@ from fastapi import FastAPI,Response
 
 from . import caching,settings,paths
 
-logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
-logger.setLevel(logging.WARNING)
-
 try:
     logging.basicConfig(level=getattr(logging,settings.config("LOG_LEVEL")))
 except AttributeError:
