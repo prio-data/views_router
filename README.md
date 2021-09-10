@@ -12,4 +12,5 @@ The fact that each separate request is cached is extremely important for
 performance, as only absolutely necessary computations are performed.
 
 The router itself is quite simple, it is its role in the system that makes it powerful.
+
 For information about how to contribute, see [contributing](https://www.github.com/prio-data/contributing).
