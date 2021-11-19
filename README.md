@@ -13,4 +13,21 @@ performance, as only absolutely necessary computations are performed.
 
 The router itself is quite simple, it is its role in the system that makes it powerful.
 
+## Env settings
+
+|Key                                                          |Description                    |Default                      |
+|-------------------------------------------------------------|-------------------------------|-----------------------------|
+|DATA_CACHE_URL                                               |                               |                             |
+|TRANSFORMER_URL                                              |                               |                             |
+|BASE_DATA_RETRIEVER_URL                                      |                               |                             |
+|LOG_LEVEL                                                    |                               |                             |
+
+## Depends-on
+
+* [views_data_transformer](https://github.com/prio-data/views_data_transformer)
+* [base_data_retriever](https://github.com/prio-data/base_data_retriever)
+* [restblobs](https://github.com/prio-data/restblobs)
+
+## Contributing
+
 For information about how to contribute, see [contributing](https://www.github.com/prio-data/contributing).
